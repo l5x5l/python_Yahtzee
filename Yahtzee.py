@@ -12,6 +12,7 @@ class Player():
     def __init__(self, name):
         self.name = name
         self.score2 = [0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
+        self.bonus = 0
         self.score = {
             'Aces' : -1,
             'Twos' : -1,
@@ -32,12 +33,24 @@ class Player():
         }
         self.total_score = 0
 
+    def update_total_score(self):
+        for i in range(1, 13):
+            if self.score2[i] != -1:
+                self.total_score += self.score2[i]
+        self.total_score += self.bonus
+
     def isAllSet(self):
-        temp = self.score.values()
-        if -1 in temp:
+        if -1 in self.score2:
             return False
         else:
             return True
+
+    def get_bonus(self):
+        tempsum = 0
+        for i in range(1,6):
+            tempsum += self.score2[i]
+        if tempsum >= 63:
+            self.bonus = 35
 
 class dice(threading.Thread):
     
@@ -130,8 +143,9 @@ class dice(threading.Thread):
         x2 = temp[3]
         for i in range(len(self.totalDis)):
             temp = self.totalDis[i]
-            screen.refresh()
+            #draw_dice_num(screen, self.id, self.totalDis[i])
             draw_dice_num(screen, self.id, self.num)
+            screen.refresh()
             curses.napms(100)
         screen.move(20, 80)
 
@@ -146,6 +160,8 @@ def section(dices, screen):
     num_list.sort()
     num_counter = collections.Counter(num_list)
     num_most_common = num_counter.most_common(5)
+    for i in range(5 - len(num_most_common)):
+        num_most_common.append((0,0))
     if num_list == [1,2,3,4,5]:
         temp = "Small Straight"
         score_list = [0,1,2,3,4,5,0,0,0,0,15,0,15,0]
@@ -154,37 +170,37 @@ def section(dices, screen):
         score_list = [0,0,2,3,4,5,6,0,0,0,0,20,20,0]
     elif num_most_common[0][1] == 5:
         temp = "Yahtzee!"
-        score_list[num_most_common[0][0] + 1] = num_most_common[0][0]*5
+        score_list[num_most_common[0][0]] = num_most_common[0][0]*5
         score_list[13] = 50
         score_list[12] = sum
     elif num_most_common[0][1] == 4:
         temp = "Four-Of-A-Kind"
-        score_list[num_most_common[0][0] + 1] = num_most_common[0][0]*4
-        score_list[num_most_common[1][0] + 1] = num_most_common[1][0]
+        score_list[num_most_common[0][0]] = num_most_common[0][0]*4
+        score_list[num_most_common[1][0]] = num_most_common[1][0]
         score_list[8] = num_most_common[0][0]*4 + num_most_common[1][0]
         score_list[12] = sum
     elif num_most_common[0][1] == 3:
         if num_most_common[1][1] == 2:
             temp = "Full House"
-            score_list[num_most_common[0][0] + 1] = num_most_common[0][0]*3
-            score_list[num_most_common[1][0] + 1] = num_most_common[1][0]*2
+            score_list[num_most_common[0][0]] = num_most_common[0][0]*3
+            score_list[num_most_common[1][0]] = num_most_common[1][0]*2
             score_list[9] = num_most_common[0][0]*3 + num_most_common[1][0]*2
             score_list[12] = sum
         else:
             temp = "Three-Of-A-Kind"
-            score_list[num_most_common[0][0] + 1] = num_most_common[0][0]*3
-            score_list[num_most_common[1][0] + 1] = num_most_common[1][0]*num_most_common[1][1]
-            score_list[num_most_common[2][0] + 1] = num_most_common[2][0]*num_most_common[2][1]
+            score_list[num_most_common[0][0]] = num_most_common[0][0]*3
+            score_list[num_most_common[1][0]] = num_most_common[1][0]*num_most_common[1][1]
+            score_list[num_most_common[2][0]] = num_most_common[2][0]*num_most_common[2][1]
             score_list[7] = num_most_common[0][0]*3
             score_list[12] = sum
     else:
         temp = "sum of nums"
-        score_list[num_most_common[0][0] + 1] = num_most_common[0][0]*num_most_common[0][1]
-        score_list[num_most_common[1][0] + 1] = num_most_common[1][0]*num_most_common[1][1]
-        score_list[num_most_common[2][0] + 1] = num_most_common[2][0]*num_most_common[2][1]
-        score_list[num_most_common[3][0] + 1] = num_most_common[3][0]*num_most_common[3][1]
-        score_list[num_most_common[4][0] + 1] = num_most_common[4][0]*num_most_common[4][1]
-        score_list = sum
+        score_list[num_most_common[0][0]] = num_most_common[0][0]*num_most_common[0][1]
+        score_list[num_most_common[1][0]] = num_most_common[1][0]*num_most_common[1][1]
+        score_list[num_most_common[2][0]] = num_most_common[2][0]*num_most_common[2][1]
+        score_list[num_most_common[3][0]] = num_most_common[3][0]*num_most_common[3][1]
+        score_list[num_most_common[4][0]] = num_most_common[4][0]*num_most_common[4][1]
+        score_list[12] = sum
     screen.addstr(16,43,temp)
     return score_list
 
@@ -194,48 +210,48 @@ def draw_field(screen, str1, str2):
     screen.addstr(2, 32, str2.name)
     screen.addstr(3, 4, "================")
     screen.addstr(4, 4, "1:Aces")
-    screen.addstr(4, 22, str(str1.score["Aces"]))
-    screen.addstr(4, 32, str(str2.score["Aces"]))
+    screen.addstr(4, 22, str(str1.score2[1]))
+    screen.addstr(4, 32, str(str2.score2[1]))
     screen.addstr(5, 4, "2:Twos")
-    screen.addstr(5, 22, str(str1.score["Twos"]))
-    screen.addstr(5, 32, str(str2.score["Twos"]))
+    screen.addstr(5, 22, str(str1.score2[2]))
+    screen.addstr(5, 32, str(str2.score2[2]))
     screen.addstr(6, 4, "3:Threes")
-    screen.addstr(6, 22, str(str1.score["Threes"]))
-    screen.addstr(6, 32, str(str2.score["Threes"]))
+    screen.addstr(6, 22, str(str1.score2[3]))
+    screen.addstr(6, 32, str(str2.score2[3]))
     screen.addstr(7, 4, "4:Fours")
-    screen.addstr(7, 22, str(str1.score["Fours"]))
-    screen.addstr(7, 32, str(str2.score["Fours"]))
+    screen.addstr(7, 22, str(str1.score2[4]))
+    screen.addstr(7, 32, str(str2.score2[4]))
     screen.addstr(8, 4, "5:Fives")
-    screen.addstr(8, 22, str(str1.score["Fives"]))
-    screen.addstr(8, 32, str(str2.score["Fives"]))
+    screen.addstr(8, 22, str(str1.score2[5]))
+    screen.addstr(8, 32, str(str2.score2[5]))
     screen.addstr(9, 4, "6:Sixes")
-    screen.addstr(9, 22, str(str1.score["Sixes"]))
-    screen.addstr(9, 32, str(str2.score["Sixes"]))
+    screen.addstr(9, 22, str(str1.score2[6]))
+    screen.addstr(9, 32, str(str2.score2[6]))
     screen.addstr(10, 4, "Bonus")
-    screen.addstr(10, 22, str(str1.score["Bonus"]))
-    screen.addstr(10, 32, str(str2.score["Bonus"]))
+    screen.addstr(10, 22, str(str1.bonus))
+    screen.addstr(10, 32, str(str2.bonus))
     screen.addstr(11, 4, "================")
     screen.addstr(12, 4, "7:Three-Of-A-Kind")
-    screen.addstr(12, 22, str(str1.score["Three-Of-A-Kind"]))
-    screen.addstr(12, 32, str(str2.score["Three-Of-A-Kind"]))
+    screen.addstr(12, 22, str(str1.score2[7]))
+    screen.addstr(12, 32, str(str2.score2[7]))
     screen.addstr(13, 4, "8:Four-Of-A-Kind")
-    screen.addstr(13, 22, str(str1.score["Four-Of-A-Kind"]))
-    screen.addstr(13, 32, str(str2.score["Four-Of-A-Kind"]))
+    screen.addstr(13, 22, str(str1.score2[8]))
+    screen.addstr(13, 32, str(str2.score2[8]))
     screen.addstr(14, 4, "9:Full House")
-    screen.addstr(14, 22, str(str1.score["Full House"]))
-    screen.addstr(14, 32, str(str2.score["Full House"]))
+    screen.addstr(14, 22, str(str1.score2[9]))
+    screen.addstr(14, 32, str(str2.score2[9]))
     screen.addstr(15, 4, "10:Small Straight")
-    screen.addstr(15, 22, str(str1.score["Small Straight"]))
-    screen.addstr(15, 32, str(str2.score["Small Straight"]))
+    screen.addstr(15, 22, str(str1.score2[10]))
+    screen.addstr(15, 32, str(str2.score2[10]))
     screen.addstr(16, 4, "11:Large Straight")
-    screen.addstr(16, 22, str(str1.score["Large Straight"]))
-    screen.addstr(16, 32, str(str2.score["Large Straight"]))
+    screen.addstr(16, 22, str(str1.score2[11]))
+    screen.addstr(16, 32, str(str2.score2[11]))
     screen.addstr(17, 4, "12:Choice")
-    screen.addstr(17, 22, str(str1.score["Chance"]))
-    screen.addstr(17, 32, str(str2.score["Chance"]))
+    screen.addstr(17, 22, str(str1.score2[12]))
+    screen.addstr(17, 32, str(str2.score2[12]))
     screen.addstr(18, 4, "13:Yahtzee")
-    screen.addstr(18, 22, str(str1.score["Yahtzee"]))
-    screen.addstr(18, 32, str(str2.score["Yahtzee"]))
+    screen.addstr(18, 22, str(str1.score2[13]))
+    screen.addstr(18, 32, str(str2.score2[13]))
     screen.addstr(19, 4, "================")
     screen.addstr(20, 4, "Total Score")
     screen.addstr(20, 22, str(str1.total_score))
@@ -384,9 +400,23 @@ def main(screen):
             #screen.addstr(0,0, s[0])
         
         scores = section(dice_list, screen)
-        c = my_raw_input(screen, 21, 80)
         #이제 여기서 점수를 받아 player객체에 저장
+        while(True):
+            c = my_raw_input(screen, 21, 80)
+            #빈 값이 입력되었을 때
+            if(c == b''):
+                screen.addstr(21,90,"잘못된 값")
+                screen.refresh()
+            elif(int(c) >= 1 and int(c)<=13) and turn.score2[int(c)] == -1:
+                turn.score2[int(c)] = scores[int(c)]
+                #7 이상은 되는데 6 이하가 안된다.
+                break
+            else:
+                screen.addstr(21,90,"잘못된 값")
+                screen.refresh()
         screen.refresh()
+        turn.get_bonus()
+        turn.update_total_score()
         turn = player1 if turn == player2 else player2
         refresh_all(screen, player1, player2)
         #screen.addstr(0,0, str(int(s[0])))
