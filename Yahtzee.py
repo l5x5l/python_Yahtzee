@@ -34,10 +34,12 @@ class Player():
         self.total_score = 0
 
     def update_total_score(self):
+        _sum = 0
         for i in range(1, 13):
             if self.score2[i] != -1:
-                self.total_score += self.score2[i]
-        self.total_score += self.bonus
+                _sum += self.score2[i]
+        _sum += self.bonus
+        self.total_score = _sum
 
     def isAllSet(self):
         if -1 in self.score2:
@@ -53,7 +55,7 @@ class Player():
             self.bonus = 35
 
 class dice(threading.Thread):
-    
+
     rollList1 = [1,5,6,2]
     rollList2 = [6,3,1,4]
     rollList3 = [2,3,5,4]
@@ -142,12 +144,23 @@ class dice(threading.Thread):
         y2 = temp[2]
         x2 = temp[3]
         for i in range(len(self.totalDis)):
+            self.clear_dice_field(screen)
             temp = self.totalDis[i]
-            #draw_dice_num(screen, self.id, self.totalDis[i])
-            draw_dice_num(screen, self.id, self.num)
+            draw_dice_num(screen, self.id, self.totalDis[i])
+            #draw_dice_num(screen, self.id, self.num)
             screen.refresh()
             curses.napms(100)
         screen.move(20, 80)
+
+#test
+    def clear_dice_field(self, screen):
+        temp = dice_place_list[self.id]
+        y1 = temp[0]
+        x1 = temp[1]
+        y2 = temp[2]
+        x2 = temp[3]
+        for i in range(5):
+            screen.addstr(y1 + i + 1 , x1 + 1, (14)*" ")
 
 def section(dices, screen):
     num_list = []
